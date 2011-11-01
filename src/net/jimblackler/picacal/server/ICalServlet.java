@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.fortuna.ical4j.data.CalendarOutputter;
 import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.PropertyList;
 import net.fortuna.ical4j.model.TimeZone;
@@ -67,7 +68,7 @@ public class ICalServlet extends HttpServlet {
       cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(Secrets.ENCRYPTION_PASSWORD, "AES"));
       byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
       JSONObject jsonObject = new JSONObject(URLDecoder.decode(new String(decryptedBytes), "UTF-8"));
-      
+
       PicasawebService service = new PicasawebService("exampleCo-exampleApp-1");
       GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
       oauthParameters.setOAuthConsumerKey(Secrets.CONSUMER_KEY);
@@ -121,21 +122,21 @@ public class ICalServlet extends HttpServlet {
         // interpreted as being a UTC time. Switching time zones converts this time to this time
         // zone. This is not what we want because the time was already in local space, converting
         // adds a second offset.
-        // The solution is to load the object as if it were a UTC DateTime, switch to local time,
-        // then reverse the unwanted time shift. This time shift needs to be created in a separate
-        // GregorianCalendar object, because iCal4j DateTime does not have working TZ/DST offset
-        // calculating method.
+        // The solution is to load the object as if it were a UTC DateTime, then create a new local
+        // time object from the calendar values.
         Long value = photo.getTimestampExt().getValue();
 
-        GregorianCalendar eventDate = new GregorianCalendar(timezone);
+        GregorianCalendar eventDate = new GregorianCalendar();
         eventDate.setTimeInMillis(value);
-        long offset = eventDate.get(GregorianCalendar.ZONE_OFFSET)
-            + eventDate.get(GregorianCalendar.DST_OFFSET);
 
-        DateTime start = new DateTime();
+        GregorianCalendar localDate = new GregorianCalendar(timezone);
+        localDate.setTimeInMillis(0);
+        localDate.set(eventDate.get(GregorianCalendar.YEAR),
+            eventDate.get(GregorianCalendar.MONTH), eventDate.get(GregorianCalendar.DATE),
+            eventDate.get(GregorianCalendar.HOUR_OF_DAY), eventDate.get(GregorianCalendar.MINUTE),
+            eventDate.get(GregorianCalendar.SECOND));
+        DateTime start = new DateTime(localDate.getTime());
         start.setTimeZone(timezone);
-        start.setTime(value - offset);
-
         VEvent meeting = new VEvent(start, start, eventName);
 
         Link link = photo.getLink("alternate", "text/html");
