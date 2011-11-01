@@ -1,0 +1,2 @@
+serviceClass: net.jimblackler.picacal.client.GreetingService
+path: CCC43D9B10A4AB41D3800EE770840E78.gwt.rpc
