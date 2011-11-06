@@ -10,6 +10,11 @@
 div#heading div {
 	height: 68px;
 }
+
+div#credits,div#credits a {
+	font-size: x-small;
+	color: gray;
+}
 </style>
 </head>
 <body>
@@ -29,14 +34,25 @@ div#heading div {
 				photos to <img src="gcalendar.png" alt="Google Calendar" style="vertical-align: -20px">.
 			</div>
 			<div>
-				<a href="about.jsp"><img src="more0.png" alt="View now" style="vertical-align: -48px"
-					onmouseover="this.src='more1.png'" onmouseout="this.src='more0.png'"></a>
+				<a href="about.jsp"><img src="more0.png" alt="View now"
+					style="vertical-align: -48px" onmouseover="this.src='more1.png'"
+					onmouseout="this.src='more0.png'"></a>
 			</div>
 		</div>
 
 		<div class="explain" style="padding-top: 40px">
 			<a href="http://google.com">Click here for a blog article about the project.</a>
 		</div>
+		<div id="credits" style="padding-top: 520px">
+			<div>
+				Graphic image license <a href="http://creativecommons.org/licenses/by-sa/2.5/deed.en">http://creativecommons.org/licenses/by-sa/2.5/deed.en</a>
+			</div>
+			<div>
+				Photo attribution <a href="http://opencage.info/pics.e/large_882.asp">http://opencage.info/pics.e/large_882.asp</a>
+				<a href="http://www.flickr.com/photos/edenpictures/4283035716">http://www.flickr.com/photos/edenpictures/4283035716</a>
+			</div>
+		</div>
 	</div>
+
 </body>
 </html>

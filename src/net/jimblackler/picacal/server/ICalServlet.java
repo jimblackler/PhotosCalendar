@@ -39,7 +39,9 @@ import net.fortuna.ical4j.model.property.XProperty;
 import net.fortuna.ical4j.util.UidGenerator;
 import net.jimblackler.picacal.Common;
 import net.jimblackler.picacal.Secrets;
+import net.jimblackler.picacal.server.RangeCompressor.CompressionException;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -58,16 +60,20 @@ import com.google.gdata.util.common.util.Base64DecoderException;
 @SuppressWarnings("serial")
 public class ICalServlet extends HttpServlet {
 
+  private static RangeCompressor rangeCompressor = new RangeCompressor();
+
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     try {
-      byte[] encryptedBytes = Base64.decode(request.getParameter("data"));
+      byte[] encryptedBytes = Base64.decodeWebSafe(request.getParameter(Common.DATA_PARAMETER));
 
       Cipher cipher = Cipher.getInstance("AES");
       cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(Secrets.ENCRYPTION_PASSWORD, "AES"));
       byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
-      JSONObject jsonObject = new JSONObject(URLDecoder.decode(new String(decryptedBytes), "UTF-8"));
+      byte[] decompressedBytes = rangeCompressor.decompress(decryptedBytes);
+      JSONArray jsonObject = new JSONArray(
+          "[\"" + URLDecoder.decode(new String(decompressedBytes), "UTF-8") + "\"]");
 
       PicasawebService service = new PicasawebService("exampleCo-exampleApp-1");
       GoogleOAuthParameters oauthParameters = new GoogleOAuthParameters();
@@ -174,6 +180,8 @@ public class ICalServlet extends HttpServlet {
     } catch (IllegalBlockSizeException e) {
       throw new ServletException(e);
     } catch (BadPaddingException e) {
+      throw new ServletException(e);
+    } catch (CompressionException e) {
       throw new ServletException(e);
     }
   }

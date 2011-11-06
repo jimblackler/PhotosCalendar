@@ -5,6 +5,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.zip.Deflater;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -19,7 +20,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import net.jimblackler.picacal.Common;
 import net.jimblackler.picacal.Secrets;
+import net.jimblackler.picacal.server.RangeCompressor.CompressionException;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,6 +34,7 @@ import com.google.gdata.util.common.util.Base64;
 
 public class RequestTokenCallbackServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
+  private static RangeCompressor rangeCompressor = new RangeCompressor();
 
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException {
@@ -43,7 +47,7 @@ public class RequestTokenCallbackServlet extends HttpServlet {
     oauthParameters.setOAuthTokenSecret(oauthTokenSecret);
     oauthHelper.getOAuthParametersFromCallback(request.getQueryString(), oauthParameters);
     try {
-      JSONObject jsonObject = new JSONObject();
+      JSONArray jsonObject = new JSONArray();
       String accessToken = oauthHelper.getAccessToken(oauthParameters);
       if (accessToken.length() == 0) {
         throw new ServletException("No access token");
@@ -57,14 +61,19 @@ public class RequestTokenCallbackServlet extends HttpServlet {
           jsonObject.put(Common.USER_TIMEZONE, cookie.getValue());
         }
       }
-      byte[] bytes = jsonObject.toString().getBytes();
+      String jsonString = jsonObject.toString();
+      jsonString = jsonString.substring(2, jsonString.length() - 2); // Trim '[" and "]'
+      byte[] unencryptedBytes = jsonString.getBytes();
+      int length = unencryptedBytes.length;
+      byte[] compressedBytes = rangeCompressor.compress(unencryptedBytes);
+      int length2 = compressedBytes.length;
       Cipher cipher = Cipher.getInstance("AES");
       cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(Secrets.ENCRYPTION_PASSWORD, "AES"));
-      byte[] encryptedBytes = cipher.doFinal(bytes);
-      String string = Base64.encode(encryptedBytes);
+      byte[] encryptedBytes = cipher.doFinal(compressedBytes);
+      String string = Base64.encodeWebSafe(encryptedBytes, false);
       String data = URLEncoder.encode(string, "UTF-8");
-      String string2 = request.getRequestURL().toString().replace("/return", "/ical") + "?data="
-          + data;
+      String string2 = request.getRequestURL().toString().replace("/return", "/ical") + "?"
+          + Common.DATA_PARAMETER + "=" + data;
       response.sendRedirect("http://www.google.com/calendar/render?cid="
           + URLEncoder.encode(string2, "UTF-8"));
     } catch (OAuthException e) {
@@ -84,6 +93,8 @@ public class RequestTokenCallbackServlet extends HttpServlet {
     } catch (UnsupportedEncodingException e) {
       throw new ServletException(e);
     } catch (IOException e) {
+      throw new ServletException(e);
+    } catch (CompressionException e) {
       throw new ServletException(e);
     }
   }
