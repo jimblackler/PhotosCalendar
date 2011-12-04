@@ -22,7 +22,7 @@ div#credits,div#credits a {
 	<div style="position: relative; left: 16px">
 
 		<div class="explain" style="padding-top: 10px">
-			<a href="http://google.com">Photos Calendar</a>: a free web service by <a
+			<a href="http://jimblackler.net/blog/?p=284">Photos Calendar</a>: a free web service by <a
 				href="mailto:jimblackler@gmail.com">Jim Blackler</a>
 		</div>
 		<div id="heading" style="padding-top: 28px">
@@ -41,7 +41,7 @@ div#credits,div#credits a {
 		</div>
 
 		<div class="explain" style="padding-top: 40px">
-			<a href="http://google.com">Click here for a blog article about the project.</a>
+			<a href="http://jimblackler.net/blog/?p=284">Click here for a blog article about the project.</a>
 		</div>
 		<div id="credits" style="padding-top: 520px">
 			<div>
